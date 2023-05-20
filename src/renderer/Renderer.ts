@@ -7,6 +7,7 @@ import { Cursor } from "./elements/Cursor";
 import { TILE_SIZE } from "./constants";
 import { clamp } from "../utils";
 import { Nodes } from "./elements/Nodes";
+import { Positioner } from "./elements/Positioner";
 import { SceneI, IconI } from "../validation/SceneSchema";
 import { OnSceneChange } from "./types";
 import { createSceneEvent, SceneEvent } from "./SceneEvent";
@@ -55,6 +56,7 @@ export class Renderer {
   };
   rafRef?: number;
   translatedCenter: paper.Point;
+  matrix: paper.Matrix;
 
   constructor(
     containerEl: HTMLDivElement,
@@ -103,11 +105,12 @@ export class Renderer {
 
     this.activeLayer = Paper.project.activeLayer;
     this.activeLayer.addChild(this.ui.container);
+    this.activeLayer.addChild(new Positioner().container);
 
     this.translatedCenter = Paper.view.center;
     Paper.view.translate(this.translatedCenter);
     this.ui.container.position = new Point(0, 0);
-    applyProjectionMatrix(this.ui.container);
+    this.matrix = applyProjectionMatrix(this.ui.container);
 
     this.render();
 
@@ -154,20 +157,21 @@ export class Renderer {
   }
 
   getTileFromMouse(_mouseX: number, _mouseY: number) {
-    const mouse = this.ui.container.matrix.inverseTransform(
-      new Point(_mouseX, _mouseY)
-    );
-    const translatedCenter = this.ui.container.matrix.inverseTransform(
+    const mouse = this.matrix.inverseTransform(new Point(_mouseX, _mouseY));
+    const translatedCenter = this.matrix.inverseTransform(
       this.translatedCenter
+    );
+    const translatedZoomedScrollPosition = this.matrix.inverseTransform(
+      this.zoomedScrollPosition
     );
 
     const zoom = 1 / this.zoom;
     const zoomedTileSize = TILE_SIZE / zoom;
 
     const mouseX =
-      mouse.x - translatedCenter.x - this.zoomedScrollPosition.x / zoom;
+      mouse.x - translatedCenter.x - translatedZoomedScrollPosition.x / zoom;
     const mouseY =
-      mouse.y - translatedCenter.y - this.zoomedScrollPosition.y / zoom;
+      mouse.y - translatedCenter.y - translatedZoomedScrollPosition.y / zoom;
 
     const row = Math.floor((mouseX + zoomedTileSize / 2) / zoomedTileSize);
     const col = Math.floor((mouseY + zoomedTileSize / 2) / zoomedTileSize);
@@ -187,7 +191,9 @@ export class Renderer {
     console.log(
       "scrollPosition",
       this.zoomedScrollPosition.x,
-      this.zoomedScrollPosition.y
+      this.zoomedScrollPosition.y,
+      translatedZoomedScrollPosition.x,
+      translatedZoomedScrollPosition.y
     );
     console.log("gridCenter", this.ui.container.bounds.center);
     console.log("vc", Paper.view.center);
@@ -203,25 +209,20 @@ export class Renderer {
   setZoom(zoom: number) {
     this.zoom = zoom;
 
-    Paper.view.zoom = this.zoom;
-    // gsap.killTweensOf(Paper.view);
-    // gsap.to(Paper.view, {
-    //   duration: 0.3,
-    //   zoom: this.zoom,
-    // });
+    gsap.killTweensOf(Paper.view);
+    gsap.to(Paper.view, {
+      duration: 0.3,
+      zoom: this.zoom,
+    });
   }
 
   scrollTo(x: number, y: number) {
     this.zoomedScrollPosition = { x, y };
 
-    const center = Paper.view.bounds.center;
-
-    const newPosition = {
-      x: x + center.x,
-      y: y + center.y,
-    };
-
-    this.ui.elements.position = new Point(newPosition.x, newPosition.y);
+    const { x: centerX, y: centerY } = Paper.view.bounds.center;
+    this.ui.elements.position = this.matrix.inverseTransform(
+      new Point(x + centerX, y + centerY)
+    );
   }
 
   scrollToDelta(deltaX: number, deltaY: number) {
