@@ -50,17 +50,18 @@ export class Cursor extends SceneElement {
       highlight: gsap
         .fromTo(
           this.renderElements.rectangle,
-          { duration: 0.25, dashOffset: 0 },
+          { duration: 0.25, dashOffset: 1 },
           { dashOffset: PIXEL_UNIT * 12, ease: "none" }
         )
-        .repeat(-1)
-        .pause(),
+        .repeat(-1),
     };
 
     this.container.addChild(this.renderElements.rectangle);
-    applyProjectionMatrix(this.container);
 
-    this.setCursorType(CURSOR_TYPES.TILE);
+    this.container.set({ pivot: [0, 0] });
+    this.size = { width: 1, height: 1 };
+
+    this.setCursorType(CURSOR_TYPES.LASSO);
     this.displayAt(0, 0);
     this.enable();
   }
@@ -69,24 +70,18 @@ export class Cursor extends SceneElement {
     if (type === this.currentType) return;
 
     this.currentType = type;
-    this.container.set({ pivot: [0, 0] });
-    this.size = {
-      width: 1,
-      height: 1,
-    };
 
     switch (type) {
       case CURSOR_TYPES.OUTLINE:
         this.renderElements.rectangle.set({
           strokeCap: "round",
           fillColor: null,
-          size: [TILE_SIZE * 1.8, TILE_SIZE * 1.8],
-          opacity: 1,
-          radius: PIXEL_UNIT * 25,
+          size: [TILE_SIZE * 1.5, TILE_SIZE * 1.5],
+          opacity: 0.5,
+          radius: PIXEL_UNIT * 8,
           strokeWidth: PIXEL_UNIT * 3,
           strokeColor: "blue",
           pivot: [0, 0],
-          dashArray: [PIXEL_UNIT * 6, PIXEL_UNIT * 6],
         });
         this.animations.highlight.play();
         break;
@@ -99,7 +94,7 @@ export class Cursor extends SceneElement {
           radius: PIXEL_UNIT * 8,
           strokeWidth: PIXEL_UNIT * 3,
           strokeColor: "blue",
-          dashArray: [5, 10],
+          dashArray: [PIXEL_UNIT * 6, PIXEL_UNIT * 6],
           pivot: [0, 0],
         });
         this.animations.highlight.play();
@@ -175,7 +170,7 @@ export class Cursor extends SceneElement {
     const targetTile = boundingBox[3];
 
     this.container.position = new Point(
-      getTileBounds(targetTile.x, targetTile.y).left
+      getTileBounds(targetTile.x, targetTile.y).center
     );
   }
 
@@ -202,10 +197,7 @@ export class Cursor extends SceneElement {
       y,
     };
 
-    const tileBoundsPosition =
-      this.currentType === CURSOR_TYPES.LASSO ? "left" : "center";
-
-    const tile = getTileBounds(x, y)[tileBoundsPosition];
+    const tile = getTileBounds(x, y)["center"];
 
     tweenPosition(this.container, {
       ...tile,

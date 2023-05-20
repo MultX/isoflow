@@ -8,6 +8,7 @@ import cuid from "cuid";
 import { SceneElement } from "../SceneElement";
 import { SceneEvent } from "../SceneEvent";
 import { tweenPosition } from "../../utils";
+import { getTileBounds } from "../utils/gridHelpers";
 
 export class Nodes {
   ctx: Context;
@@ -48,14 +49,15 @@ export class Nodes {
   }
 
   onMove(x: number, y: number, node: Node, opts?: { skipAnimation: boolean }) {
-    const tile = this.ctx.getTileBounds(x, y);
+    const tile = getTileBounds(x, y);
+
     node.position = {
       x,
       y,
     };
 
     tweenPosition(node.container, {
-      ...tile.bottom,
+      ...tile.center,
       duration: opts?.skipAnimation ? 0 : 0.05,
     });
   }

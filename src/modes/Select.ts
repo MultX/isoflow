@@ -3,6 +3,7 @@ import { Mouse } from "./types";
 import { getTargetFromSelection } from "./utils";
 import { SelectNode } from "./SelectNode";
 import { Node } from "../renderer/elements/Node";
+import { CURSOR_TYPES } from "../renderer/elements/Cursor";
 
 export class Select extends ModeBase {
   entry(mouse: Mouse) {
@@ -42,11 +43,22 @@ export class Select extends ModeBase {
   }
 
   MOUSE_MOVE(mouse: Mouse) {
-    const tile = this.ctx.renderer.getTileFromMouse(
+    const { renderer } = this.ctx;
+    const { x, y } = renderer.getTileFromMouse(
       mouse.position.x,
       mouse.position.y
     );
+    const items = renderer.getItemsByTile(x, y);
+    const target = getTargetFromSelection(items);
 
-    this.ctx.renderer.sceneElements.cursor.displayAt(tile.x, tile.y);
+    this.ctx.renderer.sceneElements.cursor.displayAt(x, y);
+
+    if (target instanceof Node) {
+      this.ctx.renderer.sceneElements.cursor.setCursorType(
+        CURSOR_TYPES.OUTLINE
+      );
+    } else {
+      this.ctx.renderer.sceneElements.cursor.setCursorType(CURSOR_TYPES.LASSO);
+    }
   }
 }

@@ -35,7 +35,7 @@ export const useGlobalState = create<GlobalState>((set, get) => ({
   closeSideNav: () => {
     set({ selectedSideNavItem: null });
   },
-  renderer: new Renderer(document.createElement("div"), () => {}),
+  renderer: new Renderer(document.createElement("div"), () => {}, undefined),
   setRenderer: (renderer: Renderer) =>
     set((state) => {
       if (state.renderer) {

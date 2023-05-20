@@ -1,13 +1,16 @@
 import { Matrix, Point } from "paper";
 
 export const getProjectionMatrix = (x: number, y: number) => {
+  const x_scale = 2;
+  const y_scale = 6;
+
   return new Matrix([
-    Math.sqrt(2) / 2,
-    Math.sqrt(6) / 6,
-    -(Math.sqrt(2) / 2),
-    Math.sqrt(6) / 6,
-    x - (Math.sqrt(2) / 2) * (x - y),
-    y - (Math.sqrt(6) / 6) * (x + y - 2),
+    Math.sqrt(x_scale) / x_scale,
+    Math.sqrt(y_scale) / y_scale,
+    -(Math.sqrt(x_scale) / x_scale),
+    Math.sqrt(y_scale) / y_scale,
+    0,
+    0,
   ]);
 };
 

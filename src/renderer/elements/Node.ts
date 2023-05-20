@@ -1,10 +1,7 @@
 import { makeAutoObservable } from "mobx";
-import { Group, Raster } from "paper";
+import { Group, Raster, Shape } from "paper";
 import { Coords, Context } from "../types";
-import { IconI } from "../../validation/SceneSchema";
-import { PROJECTED_TILE_WIDTH, PIXEL_UNIT } from "../constants";
-
-const NODE_IMG_PADDING = 0 * PIXEL_UNIT;
+import { PIXEL_UNIT, TILE_SIZE } from "../constants";
 
 export interface NodeOptions {
   id: string;
@@ -27,6 +24,7 @@ export class Node {
   renderElements = {
     iconContainer: new Group(),
     icon: new Raster(),
+    rectangle: new Shape.Rectangle({}),
   };
 
   constructor(ctx: Context, options: NodeOptions, callbacks: Callbacks) {
@@ -38,8 +36,21 @@ export class Node {
     this.icon = options.icon;
     this.callbacks = callbacks;
 
+    this.renderElements.icon.matrix = this.ctx.ui.container.matrix.inverted();
     this.renderElements.iconContainer.addChild(this.renderElements.icon);
+
+    this.container.addChild(this.renderElements.rectangle);
     this.container.addChild(this.renderElements.iconContainer);
+
+    this.renderElements.rectangle.set({
+      strokeCap: "round",
+      fillColor: "#AA99DF",
+      size: [TILE_SIZE * 1.2, TILE_SIZE * 1.2],
+      opacity: 0.7,
+      radius: PIXEL_UNIT * 6,
+      strokeWidth: PIXEL_UNIT * 1,
+      strokeColor: "#7744DF",
+    });
 
     this.init();
   }
@@ -55,11 +66,8 @@ export class Node {
 
     await new Promise((resolve) => {
       iconEl.onLoad = () => {
-        iconEl.scale(
-          (PROJECTED_TILE_WIDTH - NODE_IMG_PADDING) / iconEl.bounds.width
-        );
+        iconEl.scale((TILE_SIZE * 1.5) / iconEl.bounds.width);
 
-        iconContainer.pivot = iconEl.bounds.bottomCenter;
         iconContainer.position.set(0, 0);
 
         resolve(null);

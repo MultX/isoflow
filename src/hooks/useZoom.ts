@@ -4,7 +4,7 @@ import { useGlobalState } from "../hooks/useGlobalState";
 
 const ZOOM_INCREMENT = 0.2;
 const MIN_ZOOM = 0.2;
-const MAX_ZOOM = 1;
+const MAX_ZOOM = 2;
 
 export const useZoom = () => {
   const renderer = useGlobalState((state) => state.renderer);

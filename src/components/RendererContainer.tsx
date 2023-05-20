@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useContext } from "react";
 import { observer } from "mobx-react";
 import Box from "@mui/material/Box";
-import { Renderer } from "../renderer/Renderer";
+import { Renderer, RendererConfig } from "../renderer/Renderer";
 import { useGlobalState } from "../hooks/useGlobalState";
 import { useMouseInput } from "../hooks/useMouseInput";
 import { modeManagerContext } from "../contexts/ModeManagerContext";
@@ -17,7 +17,11 @@ export const RendererContainer = observer(() => {
   useEffect(() => {
     if (!rendererEl.current) return;
 
-    const renderer = new Renderer(rendererEl.current, onSceneChange);
+    const config: RendererConfig = {
+      grid: { width: 11, height: 11 },
+      icons: [],
+    };
+    const renderer = new Renderer(rendererEl.current, onSceneChange, config);
     setRenderer(renderer);
     setDomEl(rendererEl.current);
     modeManager.setRenderer(renderer);

@@ -1,4 +1,4 @@
-import { PROJECTED_TILE_HEIGHT, PROJECTED_TILE_WIDTH } from "../constants";
+import { TILE_SIZE } from "../constants";
 import { Coords } from "../types";
 
 // Iterates over every item in a 2 dimensional array
@@ -58,12 +58,9 @@ export const getBoundingBox = (
 };
 
 export const getTilePosition = (x: number, y: number) => {
-  const halfW = PROJECTED_TILE_WIDTH * 0.5;
-  const halfH = PROJECTED_TILE_HEIGHT * 0.5;
-
   return {
-    x: x * halfW - y * halfW,
-    y: x * halfH + y * halfH,
+    x: x * TILE_SIZE,
+    y: y * TILE_SIZE,
   };
 };
 
@@ -71,10 +68,10 @@ export const getTileBounds = (x: number, y: number) => {
   const position = getTilePosition(x, y);
 
   return {
-    left: { x: position.x - PROJECTED_TILE_WIDTH * 0.5, y: position.y },
-    right: { x: position.x + PROJECTED_TILE_WIDTH * 0.5, y: position.y },
-    top: { x: position.x, y: position.y - PROJECTED_TILE_HEIGHT * 0.5 },
-    bottom: { x: position.x, y: position.y + PROJECTED_TILE_HEIGHT * 0.5 },
+    left: { x: position.x - TILE_SIZE / 2, y: position.y },
+    right: { x: position.x + TILE_SIZE / 2, y: position.y },
+    top: { x: position.x - TILE_SIZE / 2, y: position.y },
+    bottom: { x: position.x + TILE_SIZE / 2, y: position.y },
     center: { x: position.x, y: position.y },
   };
 };

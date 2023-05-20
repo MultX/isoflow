@@ -4,15 +4,16 @@ import gsap from "gsap";
 import autobind from "auto-bind";
 import { Grid } from "./elements/Grid";
 import { Cursor } from "./elements/Cursor";
-import { PROJECTED_TILE_WIDTH, PROJECTED_TILE_HEIGHT } from "./constants";
+import { TILE_SIZE } from "./constants";
 import { clamp } from "../utils";
 import { Nodes } from "./elements/Nodes";
 import { SceneI, IconI } from "../validation/SceneSchema";
 import { OnSceneChange } from "./types";
 import { createSceneEvent, SceneEvent } from "./SceneEvent";
-import { mockScene } from "../mockData";
+import { Point } from "paper/dist/paper-core";
+import { applyProjectionMatrix } from "./utils/projection";
 
-interface Config {
+export interface RendererConfig {
   grid: {
     width: number;
     height: number;
@@ -24,10 +25,10 @@ export class Renderer {
   activeLayer: paper.Layer;
   zoom = 1;
 
-  config: Config = {
+  config: RendererConfig = {
     grid: {
-      width: 51,
-      height: 51,
+      width: 10,
+      height: 10,
     },
     icons: [],
   };
@@ -35,7 +36,7 @@ export class Renderer {
   callbacks: {
     onSceneChange: OnSceneChange;
   };
-  groups: {
+  ui: {
     container: paper.Group;
     elements: paper.Group;
   };
@@ -48,16 +49,22 @@ export class Renderer {
     container: HTMLDivElement;
     canvas: HTMLCanvasElement;
   };
-  scrollPosition = {
+  zoomedScrollPosition = {
     x: 0,
     y: 0,
   };
   rafRef?: number;
+  translatedCenter: paper.Point;
 
-  constructor(containerEl: HTMLDivElement, onChange: OnSceneChange) {
+  constructor(
+    containerEl: HTMLDivElement,
+    onChange: OnSceneChange,
+    config: RendererConfig | undefined
+  ) {
     makeAutoObservable(this);
     autobind(this);
 
+    this.config = config ?? this.config;
     this.createSceneEvent = createSceneEvent(this.onSceneChange);
 
     this.callbacks = {
@@ -82,22 +89,25 @@ export class Renderer {
       nodes: new Nodes(this),
     };
 
-    this.groups = {
+    this.ui = {
       container: new Group(),
       elements: new Group(),
     };
 
-    this.groups.elements.addChild(this.sceneElements.grid.container);
-    this.groups.elements.addChild(this.sceneElements.cursor.container);
-    this.groups.elements.addChild(this.sceneElements.nodes.container);
+    this.ui.elements.addChild(this.sceneElements.grid.container);
+    this.ui.elements.addChild(this.sceneElements.cursor.container);
+    this.ui.elements.addChild(this.sceneElements.nodes.container);
 
-    this.groups.container.addChild(this.groups.elements);
-    this.groups.container.set({ position: [0, 0] });
+    this.ui.container.addChild(this.ui.elements);
+    this.ui.container.set({ position: [0, 0] });
 
     this.activeLayer = Paper.project.activeLayer;
-    this.activeLayer.addChild(this.groups.container);
+    this.activeLayer.addChild(this.ui.container);
 
-    this.scrollTo(0, 0);
+    this.translatedCenter = Paper.view.center;
+    Paper.view.translate(this.translatedCenter);
+    this.ui.container.position = new Point(0, 0);
+    applyProjectionMatrix(this.ui.container);
 
     this.render();
 
@@ -144,52 +154,48 @@ export class Renderer {
   }
 
   getTileFromMouse(_mouseX: number, _mouseY: number) {
-    const halfW = PROJECTED_TILE_WIDTH / 2;
-    const halfH = PROJECTED_TILE_HEIGHT / 2;
+    const mouse = this.ui.container.matrix.inverseTransform(
+      new Point(_mouseX, _mouseY)
+    );
+    const translatedCenter = this.ui.container.matrix.inverseTransform(
+      this.translatedCenter
+    );
+
+    const zoom = 1 / this.zoom;
+    const zoomedTileSize = TILE_SIZE / zoom;
 
     const mouseX =
-      (_mouseX - this.groups.elements.position.x) * (1 / this.zoom);
+      mouse.x - translatedCenter.x - this.zoomedScrollPosition.x / zoom;
     const mouseY =
-      (_mouseY - this.groups.elements.position.y) * (1 / this.zoom) + halfH;
+      mouse.y - translatedCenter.y - this.zoomedScrollPosition.y / zoom;
 
-    const row = Math.floor((mouseX / halfW + mouseY / halfH) / 2);
-    const col = Math.floor((mouseY / halfH - mouseX / halfW) / 2);
+    const row = Math.floor((mouseX + zoomedTileSize / 2) / zoomedTileSize);
+    const col = Math.floor((mouseY + zoomedTileSize / 2) / zoomedTileSize);
 
     const halfRowNum = Math.floor(this.config.grid.width * 0.5);
     const halfColNum = Math.floor(this.config.grid.height * 0.5);
 
-    return {
+    const res = {
       x: clamp(row, -halfRowNum, halfRowNum),
       y: clamp(col, -halfColNum, halfColNum),
     };
-  }
 
-  getTilePosition(x: number, y: number) {
-    const halfW = PROJECTED_TILE_WIDTH * 0.5;
-    const halfH = PROJECTED_TILE_HEIGHT * 0.5;
+    console.log("mouse", mouse);
+    console.log("mouseX", mouseX);
+    console.log("mouseY", mouseY);
+    console.log("translatedCenter", translatedCenter);
+    console.log(
+      "scrollPosition",
+      this.zoomedScrollPosition.x,
+      this.zoomedScrollPosition.y
+    );
+    console.log("gridCenter", this.ui.container.bounds.center);
+    console.log("vc", Paper.view.center);
+    console.log("zoom", zoom, this.zoom);
+    console.log("zoomedTileSize", zoomedTileSize);
+    console.log(res);
 
-    return {
-      x: x * halfW - y * halfW,
-      y: x * halfH + y * halfH,
-    };
-  }
-
-  getTileBounds(x: number, y: number) {
-    const position = this.getTilePosition(x, y);
-
-    return {
-      left: {
-        x: position.x - PROJECTED_TILE_WIDTH * 0.5,
-        y: position.y - PROJECTED_TILE_HEIGHT * 0.5,
-      },
-      right: {
-        x: position.x + PROJECTED_TILE_WIDTH * 0.5,
-        y: position.y - PROJECTED_TILE_HEIGHT * 0.5,
-      },
-      top: { x: position.x, y: position.y - PROJECTED_TILE_HEIGHT },
-      bottom: { x: position.x, y: position.y },
-      center: { x: position.x, y: position.y - PROJECTED_TILE_HEIGHT * 0.5 },
-    };
+    return res;
   }
 
   setGrid(width: number, height: number) {}
@@ -197,33 +203,31 @@ export class Renderer {
   setZoom(zoom: number) {
     this.zoom = zoom;
 
-    gsap.killTweensOf(Paper.view);
-    gsap.to(Paper.view, {
-      duration: 0.3,
-      zoom: this.zoom,
-    });
+    Paper.view.zoom = this.zoom;
+    // gsap.killTweensOf(Paper.view);
+    // gsap.to(Paper.view, {
+    //   duration: 0.3,
+    //   zoom: this.zoom,
+    // });
   }
 
   scrollTo(x: number, y: number) {
-    this.scrollPosition = { x, y };
+    this.zoomedScrollPosition = { x, y };
 
-    const { center: viewCenter } = Paper.view.bounds;
+    const center = Paper.view.bounds.center;
 
     const newPosition = {
-      x: x + viewCenter.x,
-      y: y + viewCenter.y,
+      x: x + center.x,
+      y: y + center.y,
     };
 
-    gsap.to(this.groups.elements.position, {
-      duration: 0,
-      ...newPosition,
-    });
+    this.ui.elements.position = new Point(newPosition.x, newPosition.y);
   }
 
   scrollToDelta(deltaX: number, deltaY: number) {
     this.scrollTo(
-      this.scrollPosition.x + deltaX * (1 / this.zoom),
-      this.scrollPosition.y + deltaY * (1 / this.zoom)
+      this.zoomedScrollPosition.x + deltaX * (1 / this.zoom),
+      this.zoomedScrollPosition.y + deltaY * (1 / this.zoom)
     );
   }
 
