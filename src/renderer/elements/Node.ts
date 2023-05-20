@@ -19,8 +19,9 @@ export class Node {
 
   id;
   callbacks: Callbacks;
-  position;
-  icon;
+  transform_scale: number;
+  position: Coords;
+  icon: string;
   renderElements = {
     iconContainer: new Group(),
     icon: new Raster(),
@@ -35,6 +36,10 @@ export class Node {
     this.position = options.position;
     this.icon = options.icon;
     this.callbacks = callbacks;
+
+    this.transform_scale = this.ctx.ui.container.matrix
+      .inverseTransform([1, 1])
+      .getDistance([0, 0]);
 
     this.renderElements.icon.matrix = this.ctx.ui.container.matrix.inverted();
     this.renderElements.iconContainer.addChild(this.renderElements.icon);
@@ -66,7 +71,7 @@ export class Node {
 
     await new Promise((resolve) => {
       iconEl.onLoad = () => {
-        iconEl.scale((TILE_SIZE * 1.5) / iconEl.bounds.width);
+        iconEl.scale((TILE_SIZE * this.transform_scale) / iconEl.bounds.width);
 
         iconContainer.position.set(0, 0);
 
