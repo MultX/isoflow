@@ -10,4 +10,8 @@ export class ModeBase {
   entry(mouse: Mouse) {}
 
   exit() {}
+
+  get cursor() {
+    return this.ctx.renderer.sceneElements.cursor;
+  }
 }

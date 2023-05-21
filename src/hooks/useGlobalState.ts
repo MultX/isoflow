@@ -52,6 +52,14 @@ export const useGlobalState = create<GlobalState>((set, get) => ({
       //   node?.moveTo(getRandom(-5, 5), getRandom(-5, 5));
       // }, 1000);
 
+      // run after 1 sec
+      // setTimeout(() => {
+      //   renderer.sceneElements.cursor.createSelection(
+      //     { x: 0, y: 0 },
+      //     { x: 1, y: 2 }
+      //   );
+      // }, 1000);
+
       return { renderer };
     }),
 }));

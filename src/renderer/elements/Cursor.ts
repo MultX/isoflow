@@ -28,11 +28,6 @@ export class Cursor extends SceneElement {
     highlight: gsap.core.Tween;
   };
 
-  position = {
-    x: 0,
-    y: 0,
-  };
-
   size = {
     width: 1,
     height: 1,
@@ -61,8 +56,6 @@ export class Cursor extends SceneElement {
     this.container.set({ pivot: [0, 0] });
     this.size = { width: 1, height: 1 };
 
-    this.setCursorType(CURSOR_TYPES.LASSO);
-    this.displayAt(0, 0);
     this.enable();
   }
 
@@ -76,12 +69,13 @@ export class Cursor extends SceneElement {
         this.renderElements.rectangle.set({
           strokeCap: "round",
           fillColor: null,
-          size: [TILE_SIZE * 1.5, TILE_SIZE * 1.5],
-          opacity: 0.5,
-          radius: PIXEL_UNIT * 8,
+          size: [TILE_SIZE * 1.8, TILE_SIZE * 1.8],
+          opacity: 1,
+          radius: PIXEL_UNIT * 25,
           strokeWidth: PIXEL_UNIT * 3,
           strokeColor: "blue",
           pivot: [0, 0],
+          dashArray: [PIXEL_UNIT * 6, PIXEL_UNIT * 6],
         });
         this.animations.highlight.play();
         break;
@@ -146,11 +140,7 @@ export class Cursor extends SceneElement {
 
     const sorted = sortByPosition(boundingBox);
 
-    this.position = {
-      x: sorted.lowX,
-      y: sorted.lowY,
-    };
-
+    console.log(sorted);
     this.size = {
       width: sorted.highX - sorted.lowX,
       height: sorted.highY - sorted.lowY,
@@ -158,20 +148,24 @@ export class Cursor extends SceneElement {
 
     this.renderElements.rectangle.set({
       size: [
-        (this.size.width + 1) * (TILE_SIZE - PIXEL_UNIT * 3),
-        (this.size.height + 1) * (TILE_SIZE - PIXEL_UNIT * 3),
+        (this.size.width + 1) * TILE_SIZE - PIXEL_UNIT * 3,
+        (this.size.height + 1) * TILE_SIZE - PIXEL_UNIT * 3,
       ],
     });
 
-    this.container.set({
-      pivot: this.renderElements.rectangle.bounds.bottomLeft,
+    const beginTileBounds = getTileBounds(sorted.lowX, sorted.lowY);
+    const targetTileBounds = getTileBounds(sorted.highX, sorted.highY);
+
+    console.log(beginTileBounds, targetTileBounds);
+
+    const centerBetweenTiles = new Point({
+      x: (beginTileBounds.center.x + targetTileBounds.center.x) / 2,
+      y: (beginTileBounds.center.y + targetTileBounds.center.y) / 2,
     });
 
-    const targetTile = boundingBox[3];
+    console.log(centerBetweenTiles);
 
-    this.container.position = new Point(
-      getTileBounds(targetTile.x, targetTile.y).center
-    );
+    this.container.position = centerBetweenTiles;
   }
 
   predictBoundsAt(tile: Coords) {
@@ -186,16 +180,11 @@ export class Cursor extends SceneElement {
   }
 
   getInfo() {
-    return { ...this.position, ...this.size };
+    return { ...this.container.position, ...this.size };
   }
 
   displayAt(x: number, y: number, opts?: { skipAnimation: boolean }) {
     if (x === this.position.x && y === this.position.y) return;
-
-    this.position = {
-      x,
-      y,
-    };
 
     const tile = getTileBounds(x, y)["center"];
 
@@ -203,5 +192,9 @@ export class Cursor extends SceneElement {
       ...tile,
       duration: opts?.skipAnimation ? 0 : 0.05,
     });
+  }
+
+  get position() {
+    return this.container.position;
   }
 }

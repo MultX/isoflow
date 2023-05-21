@@ -12,12 +12,12 @@ export class SelectNode extends ModeBase {
       mouse.position.y
     );
 
-    this.ctx.renderer.sceneElements.cursor.displayAt(tile.x, tile.y);
-    this.ctx.renderer.sceneElements.cursor.enable();
+    this.cursor.displayAt(tile.x, tile.y);
+    this.cursor.enable();
   }
 
   exit() {
-    this.ctx.renderer.sceneElements.cursor.disable();
+    this.cursor.disable();
   }
 
   MOUSE_MOVE(mouse: Mouse) {
@@ -29,10 +29,14 @@ export class SelectNode extends ModeBase {
     );
 
     this.node.moveTo(tile.x, tile.y);
-    this.ctx.renderer.sceneElements.cursor.displayAt(tile.x, tile.y);
+    this.cursor.displayAt(tile.x, tile.y);
   }
 
   MOUSE_UP() {
     this.ctx.activateMode(Select);
+  }
+
+  get cursor() {
+    return this.ctx.renderer.sceneElements.cursor;
   }
 }

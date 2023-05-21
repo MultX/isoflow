@@ -3,7 +3,7 @@ import Paper, { Group } from "paper";
 import gsap from "gsap";
 import autobind from "auto-bind";
 import { Grid } from "./elements/Grid";
-import { Cursor } from "./elements/Cursor";
+import { CURSOR_TYPES, Cursor } from "./elements/Cursor";
 import { TILE_SIZE } from "./constants";
 import { clamp } from "../utils";
 import { Nodes } from "./elements/Nodes";
@@ -97,6 +97,8 @@ export class Renderer {
     };
 
     this.ui.elements.addChild(this.sceneElements.grid.container);
+
+    this.sceneElements.cursor.setCursorType(CURSOR_TYPES.TILE);
     this.ui.elements.addChild(this.sceneElements.cursor.container);
     this.ui.elements.addChild(this.sceneElements.nodes.container);
 
@@ -183,23 +185,6 @@ export class Renderer {
       x: clamp(row, -halfRowNum, halfRowNum),
       y: clamp(col, -halfColNum, halfColNum),
     };
-
-    console.log("mouse", mouse);
-    console.log("mouseX", mouseX);
-    console.log("mouseY", mouseY);
-    console.log("translatedCenter", translatedCenter);
-    console.log(
-      "scrollPosition",
-      this.zoomedScrollPosition.x,
-      this.zoomedScrollPosition.y,
-      translatedZoomedScrollPosition.x,
-      translatedZoomedScrollPosition.y
-    );
-    console.log("gridCenter", this.ui.container.bounds.center);
-    console.log("vc", Paper.view.center);
-    console.log("zoom", zoom, this.zoom);
-    console.log("zoomedTileSize", zoomedTileSize);
-    console.log(res);
 
     return res;
   }
