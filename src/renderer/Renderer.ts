@@ -9,7 +9,7 @@ import { clamp } from "../utils";
 import { Nodes } from "./elements/Nodes";
 import { Positioner } from "./elements/Positioner";
 import { SceneI, IconI } from "../validation/SceneSchema";
-import { OnSceneChange } from "./types";
+import { OnSceneChange, Coords } from "./types";
 import { createSceneEvent, SceneEvent } from "./SceneEvent";
 import { Point } from "paper/dist/paper-core";
 import { applyProjectionMatrix } from "./utils/projection";
@@ -252,10 +252,12 @@ export class Renderer {
     this.callbacks.onSceneChange(sceneEvent.event, this.exportScene());
   }
 
-  getItemsByTile(x: number, y: number) {
-    const node = this.nodes.getNodeByTile(x, y);
+  getNodeByTile(coords: Coords) {
+    return this.nodes.getNodeByTile(coords.x, coords.y);
+  }
 
-    return [node].filter((i) => Boolean(i));
+  getNodesInBox(from: Coords, to: Coords) {
+    return this.nodes.getNodeByTileBounds(from, to);
   }
 
   get nodes() {

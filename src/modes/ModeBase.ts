@@ -11,7 +11,15 @@ export class ModeBase {
 
   exit() {}
 
+  getTileFromMouse(mouse: Mouse) {
+    return this.renderer.getTileFromMouse(mouse.position.x, mouse.position.y);
+  }
+
   get cursor() {
     return this.ctx.renderer.sceneElements.cursor;
+  }
+
+  get renderer() {
+    return this.ctx.renderer;
   }
 }

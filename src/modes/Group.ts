@@ -1,3 +1,4 @@
+import paper from "paper";
 import { ModeBase } from "./ModeBase";
 import { Mouse } from "./types";
 import { Select } from "./Select";
@@ -5,13 +6,11 @@ import { CURSOR_TYPES } from "../renderer/elements/Cursor";
 import { Coords } from "../renderer/types";
 
 export class Group extends ModeBase {
-  downTile?: Coords;
+  startTile?: Coords;
+  endTile?: Coords;
 
   entry(mouse: Mouse) {
-    const tile = this.ctx.renderer.getTileFromMouse(
-      mouse.position.x,
-      mouse.position.y
-    );
+    const tile = this.getTileFromMouse(mouse);
 
     this.cursor.displayAt(tile.x, tile.y);
     this.cursor.enable();
@@ -21,39 +20,40 @@ export class Group extends ModeBase {
     this.cursor.disable();
   }
 
-  MOUSE_ENTER() {
-    this.cursor.enable();
-  }
-
-  MOUSE_LEAVE() {
-    this.cursor.disable();
-  }
-
   MOUSE_MOVE(mouse: Mouse) {
-    const { renderer } = this.ctx;
-    const { x, y } = renderer.getTileFromMouse(
-      mouse.position.x,
-      mouse.position.y
-    );
+    if (this.startTile === undefined) return;
+    if (this.endTile !== undefined) return;
 
-    if (this.downTile === undefined) return;
-    if (this.downTile.x === x && this.downTile.y === y) return;
+    const tile = this.getTileFromMouse(mouse);
+
+    if (this.startTile.x === tile.x && this.startTile.y === tile.y) return;
 
     this.cursor.setCursorType(CURSOR_TYPES.LASSO);
-    this.cursor.createSelection(this.downTile, { x, y });
+    this.cursor.createSelection(this.startTile, tile);
   }
 
   MOUSE_UP(mouse: Mouse) {
-    const { renderer } = this.ctx;
-    const { x, y } = renderer.getTileFromMouse(
-      mouse.position.x,
-      mouse.position.y
-    );
-    const items = renderer.getItemsByTile(x, y);
+    if (this.startTile === undefined) return;
 
-    if (items.length) {
+    const endTile = this.getTileFromMouse(mouse);
+
+    if (this.endTile) {
+      const groupBounds = new paper.Rectangle(this.startTile, this.endTile);
+
+      if (groupBounds.contains(endTile)) {
+      } else {
+        this.ctx.activateMode(Select);
+      }
     } else {
-      this.ctx.activateMode(Select);
+      this.endTile = endTile;
+      const nodes = this.renderer.getNodesInBox(this.startTile, this.endTile);
+
+      console.log(nodes);
+
+      if (nodes.length) {
+      } else {
+        this.ctx.activateMode(Select);
+      }
     }
   }
 }

@@ -34,39 +34,26 @@ export class Select extends ModeBase {
   }
 
   MOUSE_DOWN(mouse: Mouse) {
-    const { renderer } = this.ctx;
-    const { x, y } = renderer.getTileFromMouse(
-      mouse.position.x,
-      mouse.position.y
-    );
-    const items = renderer.getItemsByTile(x, y);
-    const target = getNodeFromSelection(items);
+    const tile = this.getTileFromMouse(mouse);
+    const node = this.renderer.getNodeByTile(mouse.position);
 
-    if (target instanceof Node) {
-      this.ctx.activateMode(SelectNode, (instance) => (instance.node = target));
+    if (node instanceof Node) {
+      this.ctx.activateMode(SelectNode, (instance) => (instance.node = node));
     } else {
-      this.downTile = { x, y };
+      this.downTile = tile;
     }
   }
 
   MOUSE_MOVE(mouse: Mouse) {
-    const { renderer } = this.ctx;
-    const { x, y } = renderer.getTileFromMouse(
-      mouse.position.x,
-      mouse.position.y
-    );
-    const items = renderer.getItemsByTile(x, y);
-    const target = getNodeFromSelection(items);
+    const tile = this.getTileFromMouse(mouse);
+    const node = this.renderer.getNodeByTile(mouse.position);
 
     if (this.downTile) {
-      this.ctx.activateMode(
-        Group,
-        (instance) => (instance.downTile = { x, y })
-      );
+      this.ctx.activateMode(Group, (instance) => (instance.startTile = tile));
     } else {
-      this.cursor.displayAt(x, y);
+      this.cursor.displayAt(tile.x, tile.y);
 
-      if (target instanceof Node) {
+      if (node instanceof Node) {
         this.cursor.setCursorType(CURSOR_TYPES.OUTLINE);
       } else {
         this.cursor.setCursorType(CURSOR_TYPES.TILE);
@@ -75,18 +62,14 @@ export class Select extends ModeBase {
   }
 
   MOUSE_UP(mouse: Mouse) {
-    const { renderer } = this.ctx;
-    const { x, y } = renderer.getTileFromMouse(
-      mouse.position.x,
-      mouse.position.y
-    );
-    const items = renderer.getItemsByTile(x, y);
+    const tile = this.getTileFromMouse(mouse);
+    const node = this.renderer.getNodeByTile(tile);
     this.downTile = undefined;
 
-    if (items.length) {
+    if (node) {
     } else {
       this.cursor.setCursorType(CURSOR_TYPES.TILE);
-      this.cursor.displayAt(x, y, { skipAnimation: true });
+      this.cursor.displayAt(tile.x, tile.y, { skipAnimation: true });
     }
   }
 }

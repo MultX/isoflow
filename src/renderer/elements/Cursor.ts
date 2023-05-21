@@ -140,7 +140,6 @@ export class Cursor extends SceneElement {
 
     const sorted = sortByPosition(boundingBox);
 
-    console.log(sorted);
     this.size = {
       width: sorted.highX - sorted.lowX,
       height: sorted.highY - sorted.lowY,
@@ -156,14 +155,10 @@ export class Cursor extends SceneElement {
     const beginTileBounds = getTileBounds(sorted.lowX, sorted.lowY);
     const targetTileBounds = getTileBounds(sorted.highX, sorted.highY);
 
-    console.log(beginTileBounds, targetTileBounds);
-
     const centerBetweenTiles = new Point({
       x: (beginTileBounds.center.x + targetTileBounds.center.x) / 2,
       y: (beginTileBounds.center.y + targetTileBounds.center.y) / 2,
     });
-
-    console.log(centerBetweenTiles);
 
     this.container.position = centerBetweenTiles;
   }
