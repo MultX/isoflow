@@ -2,7 +2,7 @@ import { Group } from "paper";
 import { Context } from "./types";
 
 export class SceneElement {
-  container = new Group();
+  container: InstanceType<typeof Group> = new Group();
   ctx: Context;
 
   constructor(ctx: Context) {

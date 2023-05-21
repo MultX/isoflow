@@ -1,5 +1,5 @@
 import { TILE_SIZE } from "../constants";
-import { Coords } from "../types";
+import { Coords, CoordsBox } from "../types";
 
 // Iterates over every item in a 2 dimensional array
 // const tileIterator = (w, h, cb) => {
@@ -90,11 +90,14 @@ export const getTileBounds = (x: number, y: number) => {
 //   return subset;
 // }
 
-// function isWithinBounds(tile, bounds) {
-//   const { lowX, lowY, highX, highY } = sortByPosition(bounds);
-
-//   return tile.x >= lowX && tile.x <= highX && tile.y >= lowY && tile.y <= highY;
-// }
+function isWithin(tile: Coords, tileBox: CoordsBox): boolean {
+  return (
+    tileBox.from.x <= tile.x &&
+    tileBox.to.x >= tile.x &&
+    tileBox.from.y <= tile.y &&
+    tileBox.to.y >= tile.y
+  );
+}
 
 // function getTranslation(start, end) {
 //   return { x: start.x - end.x, y: start.y - end.y };

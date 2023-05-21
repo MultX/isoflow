@@ -6,10 +6,11 @@ import { Grid } from "./elements/Grid";
 import { CURSOR_TYPES, Cursor } from "./elements/Cursor";
 import { TILE_SIZE } from "./constants";
 import { clamp } from "../utils";
+import { Node } from "./elements/Node";
 import { Nodes } from "./elements/Nodes";
 import { Positioner } from "./elements/Positioner";
 import { SceneI, IconI } from "../validation/SceneSchema";
-import { OnSceneChange, Coords } from "./types";
+import { OnSceneChange, Coords, CoordsBox } from "./types";
 import { createSceneEvent, SceneEvent } from "./SceneEvent";
 import { Point } from "paper/dist/paper-core";
 import { applyProjectionMatrix } from "./utils/projection";
@@ -252,12 +253,12 @@ export class Renderer {
     this.callbacks.onSceneChange(sceneEvent.event, this.exportScene());
   }
 
-  getNodeByTile(coords: Coords) {
-    return this.nodes.getNodeByTile(coords.x, coords.y);
+  getNodeByTile(coords: Coords): Node | undefined {
+    return this.nodes.getNodeByTile(coords);
   }
 
-  getNodesInBox(from: Coords, to: Coords) {
-    return this.nodes.getNodeByTileBounds(from, to);
+  getNodesInBox(box: CoordsBox): Node[] {
+    return this.nodes.getNodesInBox(box);
   }
 
   get nodes() {

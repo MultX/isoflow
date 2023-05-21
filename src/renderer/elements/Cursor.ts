@@ -7,7 +7,7 @@ import {
   getBoundingBox,
   getTileBounds,
 } from "../utils/gridHelpers";
-import type { Context, Coords } from "../types";
+import type { Context, Coords, CoordsBox } from "../types";
 import { SceneElement } from "../SceneElement";
 import { tweenPosition } from "../../utils";
 
@@ -132,17 +132,15 @@ export class Cursor extends SceneElement {
 
   createSelection(from: Coords, to: Coords) {
     const boundingBox = getBoundingBox([from, to]);
-    this.createSelectionFromBounds(boundingBox);
+    this.createSelectionFromBounds({ from: from, to: to });
   }
 
-  createSelectionFromBounds(boundingBox: Coords[]) {
+  createSelectionFromBounds(box: CoordsBox) {
     this.setCursorType(CURSOR_TYPES.LASSO);
 
-    const sorted = sortByPosition(boundingBox);
-
     this.size = {
-      width: sorted.highX - sorted.lowX,
-      height: sorted.highY - sorted.lowY,
+      width: Math.abs(box.from.x - box.to.x),
+      height: Math.abs(box.from.y - box.to.y),
     };
 
     this.renderElements.rectangle.set({
@@ -152,15 +150,13 @@ export class Cursor extends SceneElement {
       ],
     });
 
-    const beginTileBounds = getTileBounds(sorted.lowX, sorted.lowY);
-    const targetTileBounds = getTileBounds(sorted.highX, sorted.highY);
+    const beginTileBounds = getTileBounds(box.from.x, box.from.y);
+    const targetTileBounds = getTileBounds(box.to.x, box.to.y);
 
-    const centerBetweenTiles = new Point({
+    this.container.position = new Point({
       x: (beginTileBounds.center.x + targetTileBounds.center.x) / 2,
       y: (beginTileBounds.center.y + targetTileBounds.center.y) / 2,
     });
-
-    this.container.position = centerBetweenTiles;
   }
 
   predictBoundsAt(tile: Coords) {
@@ -178,7 +174,11 @@ export class Cursor extends SceneElement {
     return { ...this.container.position, ...this.size };
   }
 
-  displayAt(x: number, y: number, opts?: { skipAnimation: boolean }) {
+  displayAt(
+    x: number,
+    y: number,
+    opts: { skipAnimation: boolean } = { skipAnimation: true }
+  ) {
     if (x === this.position.x && y === this.position.y) return;
 
     const tile = getTileBounds(x, y)["center"];

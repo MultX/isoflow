@@ -7,6 +7,11 @@ export interface Coords {
   y: number;
 }
 
+export interface CoordsBox {
+  from: Coords;
+  to: Coords;
+}
+
 export type GeneralEventI = {
   type: "SCENE_LOAD";
 };

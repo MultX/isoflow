@@ -1,7 +1,8 @@
-import { makeAutoObservable } from "mobx";
 import { Group, Raster, Shape } from "paper";
 import { Coords, Context } from "../types";
 import { PIXEL_UNIT, TILE_SIZE } from "../constants";
+import { CURSOR_TYPES, Cursor } from "./Cursor";
+import { SceneElement } from "../SceneElement";
 
 export interface NodeOptions {
   id: string;
@@ -13,72 +14,79 @@ interface Callbacks {
   onMove: (x: number, y: number, node: Node) => void;
 }
 
-export class Node {
-  ctx: Context;
-  container = new Group();
+type NodeRenderElements = {
+  iconContainer: paper.Group;
+  icon: paper.Raster;
+  bottom: paper.Shape.Rectangle;
+  selected: Cursor;
+};
 
-  id;
+export class Node extends SceneElement {
+  private _selected: boolean = false;
+  private _transform_scale: number;
+  private _icon: string;
+  private _renderElements: NodeRenderElements;
+
+  id: string;
   callbacks: Callbacks;
-  transform_scale: number;
   position: Coords;
-  icon: string;
-  renderElements = {
-    iconContainer: new Group(),
-    icon: new Raster(),
-    rectangle: new Shape.Rectangle({}),
-  };
+
+  get selected() {
+    return this._selected;
+  }
+
+  set selected(value: boolean) {
+    this._selected = value;
+
+    if (value) {
+      this._renderElements.selected.enable();
+    } else {
+      this._renderElements.selected.disable();
+    }
+  }
 
   constructor(ctx: Context, options: NodeOptions, callbacks: Callbacks) {
-    makeAutoObservable(this);
+    super(ctx);
 
-    this.ctx = ctx;
     this.id = options.id;
     this.position = options.position;
-    this.icon = options.icon;
+    this._icon = options.icon;
     this.callbacks = callbacks;
 
-    this.transform_scale = this.ctx.ui.container.matrix
+    this._transform_scale = this.ctx.ui.container.matrix
       .inverseTransform([1, 1])
       .getDistance([0, 0]);
 
-    this.renderElements.icon.matrix = this.ctx.ui.container.matrix.inverted();
-    this.renderElements.iconContainer.addChild(this.renderElements.icon);
+    this._renderElements = {
+      iconContainer: new Group(),
+      icon: new Raster(),
+      bottom: new Shape.Rectangle({}),
+      selected: new Cursor(this.ctx),
+    };
 
-    this.container.addChild(this.renderElements.rectangle);
-    this.container.addChild(this.renderElements.iconContainer);
-
-    this.renderElements.rectangle.set({
-      strokeCap: "round",
-      fillColor: "#AA99DF",
-      size: [TILE_SIZE * 1.2, TILE_SIZE * 1.2],
-      opacity: 0.7,
-      radius: PIXEL_UNIT * 6,
-      strokeWidth: PIXEL_UNIT * 1,
-      strokeColor: "#7744DF",
-    });
-
+    this.setupSubviews();
     this.init();
   }
 
   async init() {
-    await this.updateIcon(this.icon);
+    await this.updateIcon(this._icon);
     this.moveTo(this.position.x, this.position.y);
   }
 
   async updateIcon(icon: string) {
-    this.icon = icon;
-    const { iconContainer, icon: iconEl } = this.renderElements;
+    this._icon = icon;
+    const { iconContainer, icon: iconEl } = this._renderElements;
 
     await new Promise((resolve) => {
       iconEl.onLoad = () => {
-        iconEl.scale((TILE_SIZE * this.transform_scale) / iconEl.bounds.width);
+        iconEl.scale((TILE_SIZE * this._transform_scale) / iconEl.bounds.width);
 
         iconContainer.position.set(0, 0);
 
         resolve(null);
       };
 
-      iconEl.source = this.ctx.getIconById(this.icon).url;
+      iconEl.source = this.ctx.getIconById(this._icon).url;
     });
   }
 
@@ -90,15 +98,30 @@ export class Node {
     return {
       id: this.id,
       position: this.position,
-      icon: this.icon,
+      icon: this._icon,
     };
   }
 
-  clear() {
-    this.container.removeChildren();
-  }
+  private setupSubviews() {
+    this._renderElements.icon.matrix = this.ctx.ui.container.matrix.inverted();
+    this._renderElements.iconContainer.addChild(this._renderElements.icon);
 
-  destroy() {
-    this.container.remove();
+    this.container.addChild(this._renderElements.bottom);
+
+    this.container.addChild(this._renderElements.selected.container);
+    this.container.addChild(this._renderElements.iconContainer);
+
+    this._renderElements.bottom.set({
+      strokeCap: "round",
+      fillColor: "#AA99DF",
+      size: [TILE_SIZE * 1.2, TILE_SIZE * 1.2],
+      opacity: 0.7,
+      radius: PIXEL_UNIT * 6,
+      strokeWidth: PIXEL_UNIT * 1,
+      strokeColor: "#7744DF",
+    });
+
+    this._renderElements.selected.setCursorType(CURSOR_TYPES.OUTLINE);
+    this._renderElements.selected.disable();
   }
 }
