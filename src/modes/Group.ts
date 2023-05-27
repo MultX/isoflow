@@ -65,8 +65,6 @@ export class Group extends ModeBase {
         to: this._endTile,
       });
 
-      console.log(nodes);
-
       if (nodes.length) {
       } else {
         this.ctx.activateMode(Select);

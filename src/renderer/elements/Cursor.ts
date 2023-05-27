@@ -69,11 +69,11 @@ export class Cursor extends SceneElement {
         this.renderElements.rectangle.set({
           strokeCap: "round",
           fillColor: null,
-          size: [TILE_SIZE * 1.8, TILE_SIZE * 1.8],
+          size: [TILE_SIZE * 1.4, TILE_SIZE * 1.4],
           opacity: 1,
-          radius: PIXEL_UNIT * 25,
+          radius: PIXEL_UNIT * 8,
           strokeWidth: PIXEL_UNIT * 3,
-          strokeColor: "blue",
+          strokeColor: "#7744DF",
           pivot: [0, 0],
           dashArray: [PIXEL_UNIT * 6, PIXEL_UNIT * 6],
         });

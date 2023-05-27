@@ -90,14 +90,14 @@ export const getTileBounds = (x: number, y: number) => {
 //   return subset;
 // }
 
-function isWithin(tile: Coords, tileBox: CoordsBox): boolean {
+export const isWithin = (tile: Coords, tileBox: CoordsBox): boolean => {
   return (
     tileBox.from.x <= tile.x &&
     tileBox.to.x >= tile.x &&
     tileBox.from.y <= tile.y &&
     tileBox.to.y >= tile.y
   );
-}
+};
 
 // function getTranslation(start, end) {
 //   return { x: start.x - end.x, y: start.y - end.y };

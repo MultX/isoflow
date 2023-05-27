@@ -1,4 +1,3 @@
-import { Group, Rectangle } from "paper";
 import autobind from "auto-bind";
 import { Context, Coords, CoordsBox } from "../types";
 import { Node, NodeOptions } from "./Node";
@@ -6,11 +5,7 @@ import cuid from "cuid";
 import { SceneElement } from "../SceneElement";
 import { SceneEvent } from "../SceneEvent";
 import { tweenPosition } from "../../utils";
-import {
-  getTileBounds,
-  getTilePosition,
-  getBoundingBox,
-} from "../utils/gridHelpers";
+import { getTileBounds, isWithin } from "../utils/gridHelpers";
 
 export class Nodes extends SceneElement {
   private _nodes: Node[] = [];
@@ -72,14 +67,9 @@ export class Nodes extends SceneElement {
   }
 
   getNodesInBox(box: CoordsBox): Node[] {
-    return this._nodes.filter((node) => {
-      if (!node.container.visible) return false;
-
-      const tile = node.position;
-      const res = new Rectangle(box).contains(tile);
-      console.log(res, box, tile);
-      return res;
-    });
+    return this._nodes.filter(
+      (node) => node.container.visible && isWithin(node.position, box)
+    );
   }
 
   clear() {
